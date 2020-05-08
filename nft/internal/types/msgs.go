@@ -1,15 +1,12 @@
 package types
 
 import (
+	"github.com/saisunkari19/modules/nft/common"
 	"strings"
-	
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
-
-/* --------------------------------------------------------------------------- */
-// MsgTransferNFT
-/* --------------------------------------------------------------------------- */
 
 // MsgTransferNFT defines a TransferNFT message
 type MsgTransferNFT struct {
@@ -49,7 +46,7 @@ func (msg MsgTransferNFT) ValidateBasic() error {
 	if strings.TrimSpace(msg.ID) == "" {
 		return ErrInvalidCollection
 	}
-	
+
 	return nil
 }
 
@@ -125,21 +122,34 @@ func (msg MsgEditNFTMetadata) GetSigners() []sdk.AccAddress {
 
 // MsgMintNFT defines a MintNFT message
 type MsgMintNFT struct {
-	Sender    sdk.AccAddress
-	Recipient sdk.AccAddress
-	ID        string
-	Denom     string
-	TokenURI  string
+	Sender       sdk.AccAddress
+	Recipient    sdk.AccAddress
+	ID           string
+	PrimaryNFTID string
+	T            string
+	AssetID      string
+	FileHash     string
+	Category     string
+	Rights       common.RightsDetails
+	Denom        string
+	TokenURI     string
 }
 
 // NewMsgMintNFT is a constructor function for MsgMintNFT
-func NewMsgMintNFT(sender, recipient sdk.AccAddress, id, denom, tokenURI string) MsgMintNFT {
+func NewMsgMintNFT(sender, recipient sdk.AccAddress, id, primaryNFTID, _type, assetID, fileHash, category,
+	denom, tokenURI string, rights common.RightsDetails) MsgMintNFT {
 	return MsgMintNFT{
-		Sender:    sender,
-		Recipient: recipient,
-		ID:        strings.TrimSpace(id),
-		Denom:     strings.TrimSpace(denom),
-		TokenURI:  strings.TrimSpace(tokenURI),
+		Sender:       sender,
+		Recipient:    recipient,
+		ID:           strings.TrimSpace(id),
+		PrimaryNFTID: primaryNFTID,
+		T:            _type,
+		AssetID:      assetID,
+		FileHash:     fileHash,
+		Category:     category,
+		Rights:       rights,
+		Denom: denom,
+		TokenURI:     strings.TrimSpace(tokenURI),
 	}
 }
 
@@ -151,9 +161,6 @@ func (msg MsgMintNFT) Type() string { return "mint_nft" }
 
 // ValidateBasic Implements Msg.
 func (msg MsgMintNFT) ValidateBasic() error {
-	if strings.TrimSpace(msg.Denom) == "" {
-		return ErrInvalidNFT
-	}
 	if strings.TrimSpace(msg.ID) == "" {
 		return ErrInvalidNFT
 	}
@@ -185,15 +192,13 @@ func (msg MsgMintNFT) GetSigners() []sdk.AccAddress {
 type MsgBurnNFT struct {
 	Sender sdk.AccAddress
 	ID     string
-	Denom  string
 }
 
 // NewMsgBurnNFT is a constructor function for MsgBurnNFT
-func NewMsgBurnNFT(sender sdk.AccAddress, id string, denom string) MsgBurnNFT {
+func NewMsgBurnNFT(sender sdk.AccAddress, id string) MsgBurnNFT {
 	return MsgBurnNFT{
 		Sender: sender,
 		ID:     strings.TrimSpace(id),
-		Denom:  strings.TrimSpace(denom),
 	}
 }
 
@@ -206,9 +211,6 @@ func (msg MsgBurnNFT) Type() string { return "burn_nft" }
 // ValidateBasic Implements Msg.
 func (msg MsgBurnNFT) ValidateBasic() error {
 	if strings.TrimSpace(msg.ID) == "" {
-		return ErrInvalidNFT
-	}
-	if strings.TrimSpace(msg.Denom) == "" {
 		return ErrInvalidNFT
 	}
 	if msg.Sender.Empty() {

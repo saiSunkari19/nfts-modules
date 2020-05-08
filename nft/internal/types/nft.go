@@ -3,41 +3,69 @@ package types
 import (
 	"encoding/json"
 	"fmt"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/saisunkari19/modules/nft/common"
 	"sort"
 	"strings"
-	
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	
+
 	"github.com/saisunkari19/modules/nft/exported"
 )
 
 var _ exported.NFT = (*BaseNFT)(nil)
 
-// BaseNFT non fungible token definition
 type BaseNFT struct {
-	ID       string         `json:"id,omitempty" yaml:"id"`     // id of the token; not exported to clients
-	Owner    sdk.AccAddress `json:"owner" yaml:"owner"`         // account address that owns the NFT
-	TokenURI string         `json:"token_uri" yaml:"token_uri"` // optional extra properties available for querying
+	ID           string               `json:"id,omitempty"`
+	PrimaryNFTID string               `json:"primary_nftid,omitempty"`
+	Type         string               `json:"type"`
+	AssetID      string               `json:"asset_id"`
+	FileHash     string               `json:"file_hash,omitempty"`
+	Category     string               `json:"category"`
+	Owner        sdk.AccAddress       `json:"owner"`
+	Rights       common.RightsDetails `json:"rights"`
+	TokenURI     string               `json:"token_uri"`
 }
 
-// NewBaseNFT creates a new NFT instance
-func NewBaseNFT(id string, owner sdk.AccAddress, tokenURI string) BaseNFT {
+func NewBaseNFT(id, primaryNFTID, _type, assetID, fileHash, category string, owner sdk.AccAddress,
+	rights common.RightsDetails, tokenURI string) BaseNFT {
 	return BaseNFT{
-		ID:       id,
-		Owner:    owner,
-		TokenURI: strings.TrimSpace(tokenURI),
+		ID:           id,
+		PrimaryNFTID: primaryNFTID,
+		Type:         _type,
+		AssetID:      assetID,
+		FileHash:     fileHash,
+		Category:     category,
+		Owner:        owner,
+		Rights:       rights,
+		TokenURI:     strings.TrimSpace(tokenURI),
 	}
 }
 
-// GetID returns the ID of the token
 func (bnft BaseNFT) GetID() string { return bnft.ID }
 
-// GetOwner returns the account address that owns the NFT
+func (bnft BaseNFT) GetPrimaryNFTID() string { return bnft.PrimaryNFTID }
+
+func (bnft BaseNFT) GetType() string { return bnft.Type }
+
+func (bnft BaseNFT) GetAssetID() string { return bnft.AssetID }
+
+func (bnft BaseNFT) GetFileHash() string { return bnft.FileHash }
+
+func (bnft BaseNFT) GetCategory() string { return bnft.Category }
+
 func (bnft BaseNFT) GetOwner() sdk.AccAddress { return bnft.Owner }
 
-// SetOwner updates the owner address of the NFT
+func (bnft BaseNFT) GetRights() common.RightsDetails { return bnft.Rights }
+
 func (bnft *BaseNFT) SetOwner(address sdk.AccAddress) {
 	bnft.Owner = address
+}
+
+func (bnft *BaseNFT) SetRights(rights common.RightsDetails) {
+	bnft.Rights = rights
+}
+
+func (bnft *BaseNFT) SetAssetID(id string) {
+	bnft.AssetID = id
 }
 
 // GetTokenURI returns the path to optional extra properties
@@ -92,7 +120,7 @@ func (nfts NFTs) Update(id string, nft exported.NFT) (NFTs, bool) {
 	if index == -1 {
 		return nfts, false
 	}
-	
+
 	return append(append(nfts[:index], nft), nfts[index+1:]...), true
 }
 
@@ -102,7 +130,7 @@ func (nfts NFTs) Remove(id string) (NFTs, bool) {
 	if index == -1 {
 		return nfts, false
 	}
-	
+
 	return append(nfts[:index], nfts[index+1:]...), true
 }
 
@@ -111,7 +139,7 @@ func (nfts NFTs) String() string {
 	if len(nfts) == 0 {
 		return ""
 	}
-	
+
 	out := ""
 	for _, nft := range nfts {
 		out += fmt.Sprintf("%v\n", nft.String())
@@ -139,7 +167,8 @@ func (nfts NFTs) MarshalJSON() ([]byte, error) {
 	nftJSON := make(NFTJSON)
 	for _, nft := range nfts {
 		id := nft.GetID()
-		bnft := NewBaseNFT(id, nft.GetOwner(), nft.GetTokenURI())
+		bnft := NewBaseNFT(id, nft.GetPrimaryNFTID(), nft.GetType(), nft.GetAssetID(), nft.GetFileHash(),
+			nft.GetCategory(), nft.GetOwner(), nft.GetRights(), nft.GetTokenURI())
 		nftJSON[id] = bnft
 	}
 	return json.Marshal(nftJSON)
@@ -151,9 +180,10 @@ func (nfts *NFTs) UnmarshalJSON(b []byte) error {
 	if err := json.Unmarshal(b, &nftJSON); err != nil {
 		return err
 	}
-	
+
 	for id, nft := range nftJSON {
-		bnft := NewBaseNFT(id, nft.GetOwner(), nft.GetTokenURI())
+		bnft := NewBaseNFT(id, nft.GetPrimaryNFTID(), nft.GetType(), nft.GetAssetID(), nft.GetFileHash(),
+			nft.GetCategory(), nft.GetOwner(), nft.GetRights(), nft.GetTokenURI())
 		*nfts = append(*nfts, &bnft)
 	}
 	return nil
