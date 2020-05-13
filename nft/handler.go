@@ -2,12 +2,12 @@ package nft
 
 import (
 	"fmt"
-	
+
 	abci "github.com/tendermint/tendermint/abci/types"
-	
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	
+
 	"github.com/saisunkari19/modules/nft/internal/keeper"
 	"github.com/saisunkari19/modules/nft/internal/types"
 )
@@ -15,7 +15,7 @@ import (
 // GenericHandler routes the messages to the handlers
 func GenericHandler(k keeper.Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
-		
+
 		switch msg := msg.(type) {
 		case types.MsgTransferNFT:
 			return HandleMsgTransferNFT(ctx, msg, k)
@@ -45,7 +45,7 @@ func HandleMsgTransferNFT(ctx sdk.Context, msg types.MsgTransferNFT, k keeper.Ke
 	if err != nil {
 		return nil, err
 	}
-	
+
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeTransfer,
@@ -69,14 +69,14 @@ func HandleMsgEditNFTMetadata(ctx sdk.Context, msg types.MsgEditNFTMetadata, k k
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// update NFT
 	nft.EditMetadata(msg.TokenURI)
 	err = k.UpdateNFT(ctx, msg.Denom, nft)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeEditNFTMetadata,
@@ -96,12 +96,12 @@ func HandleMsgEditNFTMetadata(ctx sdk.Context, msg types.MsgEditNFTMetadata, k k
 // HandleMsgMintNFT handles MsgMintNFT
 func HandleMsgMintNFT(ctx sdk.Context, msg types.MsgMintNFT, k keeper.Keeper,
 ) (*sdk.Result, error) {
-	nft := types.NewBaseNFT(msg.ID, msg.Recipient, msg.TokenURI)
+	nft := types.NewBaseNFT(msg.ID, msg.PrimaryNFTID, msg.T, msg.AssetID, msg.FileHash, msg.Category, msg.Recipient, msg.Rights, msg.TokenURI)
 	err := k.MintNFT(ctx, msg.Denom, &nft)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeMintNFT,
@@ -126,13 +126,13 @@ func HandleMsgBurnNFT(ctx sdk.Context, msg types.MsgBurnNFT, k keeper.Keeper,
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// remove  NFT
 	err = k.DeleteNFT(ctx, msg.Denom, msg.ID)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeBurnNFT,

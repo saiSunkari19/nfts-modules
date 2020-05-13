@@ -4,10 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"strings"
-	
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -16,7 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth"
 	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
-	
+
 	"github.com/saisunkari19/modules/nft/internal/types"
 )
 
@@ -32,14 +32,14 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		Short: "NFT transactions subcommands",
 		RunE:  client.ValidateCmd,
 	}
-	
+
 	nftTxCmd.AddCommand(flags.PostCommands(
 		GetCmdTransferNFT(cdc),
 		GetCmdEditNFTMetadata(cdc),
 		GetCmdMintNFT(cdc),
 		GetCmdBurnNFT(cdc),
 	)...)
-	
+
 	return nftTxCmd
 }
 
@@ -66,20 +66,20 @@ crypto-kitties d04b98f48e8f8bcc15c6ae5ac050801cd6dcfd428fb5f9e65c4e16e7807340fa 
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			txBldr := authtypes.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			
+
 			sender, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
 				return err
 			}
-			
+
 			recipient, err := sdk.AccAddressFromBech32(args[1])
 			if err != nil {
 				return err
 			}
-			
+
 			denom := args[2]
 			tokenID := args[3]
-			
+
 			msg := types.NewMsgTransferNFT(sender, recipient, denom, tokenID)
 			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
@@ -107,16 +107,16 @@ $ %s tx %s edit-metadata crypto-kitties d04b98f48e8f8bcc15c6ae5ac050801cd6dcfd42
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			txBldr := authtypes.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			
+
 			denom := args[0]
 			tokenID := args[1]
 			tokenURI := viper.GetString(flagTokenURI)
-			
+
 			msg := types.NewMsgEditNFTMetadata(cliCtx.GetFromAddress(), tokenID, denom, tokenURI)
 			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
-	
+
 	cmd.Flags().String(flagTokenURI, "", "Extra properties available for querying")
 	return cmd
 }
@@ -124,7 +124,7 @@ $ %s tx %s edit-metadata crypto-kitties d04b98f48e8f8bcc15c6ae5ac050801cd6dcfd42
 // GetCmdMintNFT is the CLI command for a MintNFT transaction
 func GetCmdMintNFT(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "mint [denom] [tokenID] [recipient]",
+		Use:   "mint  [recipient] [id] [pnftID] [type] [assetID] [fileHash] [category] [denom] [tokenID] [rights]",
 		Short: "mint an NFT and set the owner to the recipient",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Mint an NFT from a given collection that has a 
@@ -142,24 +142,22 @@ cosmos1gghjut3ccd8ay0zduzj64hwre2fxs9ld75ru9p --from mykey
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			txBldr := authtypes.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			
-			denom := args[0]
-			tokenID := args[1]
-			
-			recipient, err := sdk.AccAddressFromBech32(args[2])
+
+			recipient, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
 				return err
 			}
-			
-			tokenURI := viper.GetString(flagTokenURI)
-			
-			msg := types.NewMsgMintNFT(cliCtx.GetFromAddress(), recipient, tokenID, denom, tokenURI)
+
+			//	tokenURI := viper.GetString(flagTokenURI)
+
+			msg := types.NewMsgMintNFT(cliCtx.GetFromAddress(), recipient, args[1], args[2], args[3], args[4],
+				args[5], args[6], args[7], args[8], nil)
 			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
-	
-	cmd.Flags().String(flagTokenURI, "", "URI for supplemental off-chain metadata (should return a JSON object)")
-	
+
+	//cmd.Flags().String(flagTokenURI, "", "URI for supplemental off-chain metadata (should return a JSON object)")
+
 	return cmd
 }
 
@@ -184,10 +182,10 @@ $ %s tx %s burn crypto-kitties d04b98f48e8f8bcc15c6ae5ac050801cd6dcfd428fb5f9e65
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			txBldr := authtypes.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			
+
 			denom := args[0]
 			tokenID := args[1]
-			
+
 			msg := types.NewMsgBurnNFT(cliCtx.GetFromAddress(), tokenID, denom)
 			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},

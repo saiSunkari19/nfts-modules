@@ -148,7 +148,7 @@ func NewMsgMintNFT(sender, recipient sdk.AccAddress, id, primaryNFTID, _type, as
 		FileHash:     fileHash,
 		Category:     category,
 		Rights:       rights,
-		Denom: denom,
+		Denom:        denom,
 		TokenURI:     strings.TrimSpace(tokenURI),
 	}
 }
@@ -192,13 +192,15 @@ func (msg MsgMintNFT) GetSigners() []sdk.AccAddress {
 type MsgBurnNFT struct {
 	Sender sdk.AccAddress
 	ID     string
+	Denom  string
 }
 
 // NewMsgBurnNFT is a constructor function for MsgBurnNFT
-func NewMsgBurnNFT(sender sdk.AccAddress, id string) MsgBurnNFT {
+func NewMsgBurnNFT(sender sdk.AccAddress, id, denom string) MsgBurnNFT {
 	return MsgBurnNFT{
 		Sender: sender,
 		ID:     strings.TrimSpace(id),
+		Denom:  denom,
 	}
 }
 

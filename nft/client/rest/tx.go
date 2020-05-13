@@ -2,15 +2,15 @@ package rest
 
 import (
 	"net/http"
-	
+
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
-	
+
 	"github.com/saisunkari19/modules/nft/internal/types"
-	
+
 	"github.com/gorilla/mux"
 )
 
@@ -21,19 +21,19 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router,
 		"/nfts/transfer",
 		transferNFTHandler(cdc, cliCtx),
 	).Methods("POST")
-	
+
 	// Update an NFT metadata
 	r.HandleFunc(
 		"/nfts/collection/{denom}/nft/{id}/metadata",
 		editNFTMetadataHandler(cdc, cliCtx),
 	).Methods("PUT")
-	
+
 	// Mint an NFT
 	r.HandleFunc(
 		"/nfts/mint",
 		mintNFTHandler(cdc, cliCtx),
 	).Methods("POST")
-	
+
 	// Burn an NFT
 	r.HandleFunc(
 		"/nfts/collection/{denom}/nft/{id}/burn",
@@ -66,7 +66,7 @@ func transferNFTHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.Handle
 		}
 		// create the message
 		msg := types.NewMsgTransferNFT(cliCtx.GetFromAddress(), recipient, req.Denom, req.ID)
-		
+
 		authclient.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
 	}
 }
@@ -89,20 +89,25 @@ func editNFTMetadataHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.Ha
 		if !baseReq.ValidateBasic(w) {
 			return
 		}
-		
+
 		// create the message
 		msg := types.NewMsgEditNFTMetadata(cliCtx.GetFromAddress(), req.ID, req.Denom, req.TokenURI)
-		
+
 		authclient.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
 	}
 }
 
 type mintNFTReq struct {
-	BaseReq   rest.BaseReq   `json:"base_req"`
-	Recipient sdk.AccAddress `json:"recipient"`
-	Denom     string         `json:"denom"`
-	ID        string         `json:"id"`
-	TokenURI  string         `json:"tokenURI"`
+	BaseReq      rest.BaseReq   `json:"base_req"`
+	Recipient    sdk.AccAddress `json:"recipient"`
+	ID           string         `json:"id"`
+	PrimaryNFTID string         `json:"primary_nftid"`
+	T            string         `json:"t"`
+	AssetID      string         `json:"asset_id"`
+	FileHash     string         `json:"file_hash"`
+	Category     string         `json:"category"`
+	Denom        string         `json:"denom"`
+	TokenURI     string         `json:"token_uri"`
 }
 
 func mintNFTHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
@@ -116,10 +121,11 @@ func mintNFTHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFun
 		if !baseReq.ValidateBasic(w) {
 			return
 		}
-		
+
 		// create the message
-		msg := types.NewMsgMintNFT(cliCtx.GetFromAddress(), req.Recipient, req.ID, req.Denom, req.TokenURI)
-		
+		msg := types.NewMsgMintNFT(cliCtx.GetFromAddress(), req.Recipient, req.ID, req.PrimaryNFTID,
+			req.T, req.AssetID, req.FileHash, req.Category, req.Denom, req.TokenURI, nil)
+
 		authclient.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
 	}
 }
@@ -141,7 +147,7 @@ func burnNFTHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFun
 		if !baseReq.ValidateBasic(w) {
 			return
 		}
-		
+
 		// create the message
 		msg := types.NewMsgBurnNFT(cliCtx.GetFromAddress(), req.ID, req.Denom)
 		authclient.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
